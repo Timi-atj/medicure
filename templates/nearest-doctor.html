@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Find Nearest Doctor - MedMind</title>
+  <link rel="stylesheet" href="../static/css/bootstrap.css">
+  <link rel="stylesheet" href="../static/css/theme.css">
+</head>
+<body>
+  <div class="container py-5">
+    <h2 class="mb-4 text-primary text-center">Find the Nearest Doctor</h2>
+    <p class="text-center">Allow location access to see doctors closest to you.</p>
+
+    <div id="doctor-list" class="row mt-4"></div>
+  </div>
+
+  <script>
+    const doctors = [
+      { name: "Dr. Jane Doe", specialty: "Cardiologist", lat: 37.7749, lng: -122.4194, phone: "1234567890" },
+      { name: "Dr. John Smith", specialty: "Dermatologist", lat: 37.7849, lng: -122.4094, phone: "9876543210" },
+      { name: "Dr. Aisha Khan", specialty: "Pediatrician", lat: 37.7649, lng: -122.4294, phone: "1122334455" }
+    ];
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const toRad = angle => angle * Math.PI / 180;
+      const R = 6371; // Earth radius in km
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                Math.sin(dLon / 2) ** 2;
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    function displayDoctors(userLat, userLng) {
+      const sorted = doctors.map(doc => {
+        const distance = getDistance(userLat, userLng, doc.lat, doc.lng);
+        return { ...doc, distance: distance.toFixed(2) };
+      }).sort((a, b) => a.distance - b.distance);
+
+      const container = document.getElementById("doctor-list");
+      container.innerHTML = "";
+
+      sorted.forEach(doc => {
+        const html = `
+          <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title">${doc.name}</h5>
+                <p class="card-text">${doc.specialty}</p>
+                <p><strong>Distance:</strong> ${doc.distance} km</p>
+                <a href="tel:${doc.phone}" class="btn btn-primary btn-sm">Call</a>
+                <a href="https://www.google.com/maps?q=${doc.lat},${doc.lng}" target="_blank" class="btn btn-outline-secondary btn-sm ml-2">View on Map</a>
+              </div>
+            </div>
+          </div>`;
+        container.innerHTML += html;
+      });
+    }
+
+    function init() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+          const { latitude, longitude } = position.coords;
+          displayDoctors(latitude, longitude);
+        }, () => {
+          alert("Location access is required to find nearby doctors.");
+        });
+      } else {
+        alert("Geolocation is not supported by your browser.");
+      }
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="copyright" content="MACode ID, https://macodeid.com/">
+  <title>MedMind - Symptom-Based AI Disease Prediction with Remedies</title>
+  <link rel="icon" type="image/ico" href="static/img/cardiogram.ico">
+
+  <link rel="stylesheet" href="../static/css/maicons.css">
+  <link rel="stylesheet" href="../static/css/bootstrap.css">
+  <link rel="stylesheet" href="../static/vendor/owl-carousel/css/owl.carousel.css">
+  <link rel="stylesheet" href="../static/vendor/animate/animate.css">
+  <link rel="stylesheet" href="../static/css/theme.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #F5F5F5;
+    }
+    .container-boxing {
+      margin: 0 auto;
+      font-size: 20px;
+      background-color: #FFFFFF;
+      box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      padding: 20px;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    input[type="text"] {
+      width: 100%;
+      max-width: 400px;
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #CCCCCC;
+      border-radius: 5px;
+      outline: none;
+    }
+    input[type="submit"] {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    input[type="submit"]:hover {
+      background-color: #0069D9;
+    }
+    .img-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 40px;
+      margin-bottom: 20px;
+    }
+    .img-container img {
+      max-width: 200px;
+      margin: 0 20px;
+      box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+    @media only screen and (max-width: 767px) {
+      .container-boxing {
+        padding: 10px;
+      }
+      input[type="text"] {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="topbar">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-8 text-sm">
+          <div class="site-info">
+            <a href="#"><span class="mai-mail text-primary"></span> UPES</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <nav class="navbar navbar-expand-lg navbar-light shadow-sm">
+    <div class="container">
+      <a class="navbar-brand" href="#"><span class="text-primary">Med</span>Mind</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupport">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarSupport">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item active"><a class="nav-link" href="index">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="about">About Us</a></li>
+          <li class="nav-item"><a class="nav-link" href="demo">Disease Detection</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<div class="container-boxing">
+  <form action="{{ url_for('treatment') }}" method="post">
+    <p>Top 5 Diseases that you may be suffering from:</p>
+    <div style="width: 100%; max-width: 700px; margin: auto;">
+      <canvas id="confidenceChart"
+              data-labels='[{% for x in arr %}"{{ x[0] }}"{% if not loop.last %},{% endif %}{% endfor %}]'
+              data-values='[{% for x in arr %}{{ (x[1] * 100) | round(2) }}{% if not loop.last %},{% endif %}{% endfor %}]'>
+      </canvas>
+    </div>
+    <label for="relevance">Please select the relevant disease (case-sensitive):</label>
+    <input type="text" id="dis_input" name="dis">
+    <input type="submit" value="Submit">
+  </form>
+
+  <div class="img-container">
+    <img src="../static/img/symp1.jpg" alt="">
+    <img src="../static/img/symp2.jpeg" alt="">
+    <img src="../static/img/symp3.jpeg" alt="">
+  </div>
+</div>
+
+<script>
+  window.addEventListener('DOMContentLoaded', function () {
+    const canvas = document.getElementById('confidenceChart');
+    const labels = JSON.parse(canvas.getAttribute('data-labels'));
+    let rawData = JSON.parse(canvas.getAttribute('data-values'));
+
+    // Normalize and scale data
+    let min = Math.min(...rawData);
+    let max = Math.max(...rawData);
+    let data = rawData.map(v => max !== min ? ((v - min) / (max - min)) * 100 : 100);
+
+    const ctx = canvas.getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Normalized Confidence (%)',
+          data: data,
+          backgroundColor: ['#4caf50', '#2196f3', '#ff9800', '#9c27b0', '#f44336'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        scales: {
+          x: {
+            beginAtZero: true,
+            max: 100,
+            title: {
+              display: true,
+              text: 'Confidence (normalized to 100%)'
+            }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+tooltip: {
+  callbacks: {
+    label: function(ctx) {
+      return `${labels[ctx.dataIndex]}: ${ctx.raw.toFixed(2)}% confidence`;
+    }
+  }
+}
+        },
+        responsive: true
+      }
+    });
+
+    if (labels.length > 0) {
+      document.getElementById('dis_input').value = labels[0];
+    }
+  });
+</script>
+</body>
+</html>
