@@ -1,11 +1,10 @@
-from flask import Flask, request, redirect, url_for, render_template, session
+from flask import Flask, request, render_template, session
 import warnings
 import numpy as np
 import pandas as pd
 import pickle
 import openpyxl
 from collections import Counter
-import operator
 from Treatment import diseaseDetail
 from utils import preprocess_user_symptoms, get_similar_symptoms, build_input_vector, load_model, get_top_predictions_with_confidence
 
@@ -33,7 +32,7 @@ def about():
 
 @app.route("/demo", methods=["GET"])
 def demo():
-    return render_template("demo.html")
+    return render_template("demo.html", symptoms=SYMPTOM_COLUMNS)
 
 @app.route("/nearest-doctor", methods=["GET"])
 def nearest_doctor():
@@ -41,7 +40,7 @@ def nearest_doctor():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    user_symptoms = request.form.get('symptoms', '').split(',')
+    user_symptoms = request.form.getlist('symptoms')  # updated to support multi-select
     user_symptoms = preprocess_user_symptoms(user_symptoms)
     found_symptoms = get_similar_symptoms(SYMPTOM_COLUMNS, user_symptoms)
 
@@ -62,7 +61,11 @@ def predict():
     session['final_symptoms'] = found_symptoms
     session['suggested_symptoms'] = suggestions
 
-    return render_template("predict.html", found_symptoms=enumerate(found_symptoms), another_symptoms=enumerate(suggestions), count=len(suggestions), dict_symp_tup=len(suggestions))
+    return render_template("predict.html",
+                           found_symptoms=enumerate(found_symptoms),
+                           another_symptoms=enumerate(suggestions),
+                           count=len(suggestions),
+                           dict_symp_tup=len(suggestions))
 
 @app.route("/next", methods=["POST"])
 def next():
@@ -96,6 +99,27 @@ def treatment():
             treatments = ''.join(str(cell) for cell in row[1:] if cell).split(',')
             return render_template("treatment.html", ans=treatments)
     return render_template("treatment.html", ans=["No treatment info found."])
+
+# ---------------------- Mock Payment Gateway ----------------------
+from flask import redirect
+
+@app.route("/payment")
+def payment_page():
+    """Display a fake Interswitch payment form"""
+    return render_template("payment.html")
+
+@app.route("/verify_payment", methods=["POST"])
+def verify_payment():
+    """Fake verify and redirect based on card number"""
+    card_number = request.form.get("card_number", "")
+    if card_number and card_number[-1] in "02468":  # even = success
+        return redirect(url_for("payment_success"))
+    return "<h3 style='text-align:center; color:red;'>Payment Failed ❌ <br><a href='/payment'>Try Again</a></h3>"
+
+@app.route("/success")
+def payment_success():
+    """Payment Success Page"""
+    return render_template("success.html")
 
 
 if __name__ == '__main__':

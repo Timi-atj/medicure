@@ -3,13 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <title>Find Nearest Doctor - MedMind</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="../static/css/bootstrap.css">
   <link rel="stylesheet" href="../static/css/theme.css">
+  <style>
+    .doctor-card {
+      border-radius: 1rem;
+      transition: transform 0.2s ease-in-out;
+    }
+    .doctor-card:hover {
+      transform: scale(1.02);
+    }
+    .card-title {
+      font-size: 1.25rem;
+      color: #007bff;
+    }
+    .card-text {
+      color: #333;
+    }
+    @media (max-width: 767px) {
+      .card-title {
+        font-size: 1rem;
+      }
+      .card-text, .btn {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="container py-5">
     <h2 class="mb-4 text-primary text-center">Find the Nearest Doctor</h2>
-    <p class="text-center">Allow location access to see doctors closest to you.</p>
+    <p class="text-center text-muted">Allow location access to see doctors closest to you.</p>
 
     <div id="doctor-list" class="row mt-4"></div>
   </div>
@@ -23,7 +48,7 @@
 
     function getDistance(lat1, lon1, lat2, lon2) {
       const toRad = angle => angle * Math.PI / 180;
-      const R = 6371; // Earth radius in km
+      const R = 6371;
       const dLat = toRad(lat2 - lat1);
       const dLon = toRad(lon2 - lon1);
       const a = Math.sin(dLat / 2) ** 2 +
@@ -43,14 +68,14 @@
 
       sorted.forEach(doc => {
         const html = `
-          <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm">
+          <div class="col-md-4 col-sm-6 mb-4">
+            <div class="card h-100 shadow-sm doctor-card">
               <div class="card-body">
                 <h5 class="card-title">${doc.name}</h5>
                 <p class="card-text">${doc.specialty}</p>
-                <p><strong>Distance:</strong> ${doc.distance} km</p>
+                <p class="text-muted"><strong>Distance:</strong> ${doc.distance} km</p>
                 <a href="tel:${doc.phone}" class="btn btn-primary btn-sm">Call</a>
-                <a href="https://www.google.com/maps?q=${doc.lat},${doc.lng}" target="_blank" class="btn btn-outline-secondary btn-sm ml-2">View on Map</a>
+                <a href="https://www.google.com/maps?q=${doc.lat},${doc.lng}" target="_blank" class="btn btn-outline-secondary btn-sm ml-2">View Map</a>
               </div>
             </div>
           </div>`;
