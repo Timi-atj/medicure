@@ -1,11 +1,24 @@
-import requests
-from bs4 import BeautifulSoup
+import nltk
 from nltk.corpus import stopwords, wordnet
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import RegexpTokenizer
 from itertools import combinations
 import pickle
 import numpy as np
+import requests
+from bs4 import BeautifulSoup
+
+# --- NLTK Resource Setup (auto-download if missing) ---
+try:
+    stop_words = set(stopwords.words('english'))
+except LookupError:
+    nltk.download('stopwords')
+    stop_words = set(stopwords.words('english'))
+
+try:
+    _ = wordnet.synsets('disease')
+except LookupError:
+    nltk.download('wordnet')
 
 lemmatizer = WordNetLemmatizer()
 tokenizer = RegexpTokenizer(r'\w+')
